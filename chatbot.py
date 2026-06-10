@@ -170,3 +170,32 @@ def generate_quiz(vector_store: FAISS, model_name: str = "llama3") -> str:
         f"CONTENT:\n{context}"
     )
     return _llm_invoke(model_name, prompt)
+
+
+def generate_qa_pairs(vector_store: FAISS, model_name: str = "llama3") -> str:
+    context = _get_context(vector_store, "", k=8)
+    prompt = (
+        "Generate 6 question-and-answer pairs from the CONTENT below.\n"
+        "Format each pair exactly as:\n"
+        "Q: <question>\n"
+        "A: <answer>\n\n"
+        "Use only information from the CONTENT. Be concise.\n\n"
+        f"CONTENT:\n{context}"
+    )
+    return _llm_invoke(model_name, prompt)
+
+
+def generate_mcq_quiz(vector_store: FAISS, model_name: str = "llama3", num_questions: int = 7) -> str:
+    context = _get_context(vector_store, "", k=10)
+    prompt = (
+        f"Generate exactly {num_questions} multiple-choice questions from the CONTENT below.\n"
+        "Return ONLY valid JSON — no explanation, no markdown, no code fences.\n"
+        "Use this exact JSON structure:\n"
+        '[{"question": "...", "options": {"A": "...", "B": "...", "C": "...", "D": "..."}, "answer": "A"}]\n'
+        "Rules:\n"
+        "- answer must be exactly one of: A, B, C, D\n"
+        "- all 4 options must be present\n"
+        "- base questions only on the CONTENT\n\n"
+        f"CONTENT:\n{context}"
+    )
+    return _llm_invoke(model_name, prompt)
