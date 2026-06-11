@@ -53,11 +53,42 @@ def get_transcript(video_id: str) -> str:
 
     print(f"[DEBUG] Fetching transcript for video_id: {video_id}")
 
+    def format_time(seconds: float) -> str:
+        s = int(seconds)
+        h = s // 3600
+        m = (s % 3600) // 60
+        sec = s % 60
+        if h > 0:
+            return f"{h}:{m:02d}:{sec:02d}"
+        else:
+            return f"{m}:{sec:02d}"
+
+    def get_snippet_data(snippet) -> Tuple[str, float]:
+        if isinstance(snippet, dict):
+            return snippet.get("text", ""), float(snippet.get("start", 0.0))
+        text = getattr(snippet, "text", "")
+        start = getattr(snippet, "start", 0.0)
+        return str(text), float(start)
+
+    def process_snippets(snippets) -> str:
+        parts = []
+        last_time = -999.0
+        for snippet in snippets:
+            t, start = get_snippet_data(snippet)
+            if not t:
+                continue
+            if start - last_time >= 30.0:
+                parts.append(f"[{format_time(start)}] {t}")
+                last_time = start
+            else:
+                parts.append(t)
+        return " ".join(parts)
+
     # v1.x API: fetch_transcript returns a FetchedTranscript object, iterate it
     try:
         ytt_api = YouTubeTranscriptApi()
         fetched = ytt_api.fetch(video_id)
-        text = " ".join(snippet.text for snippet in fetched)
+        text = process_snippets(fetched)
         if not text.strip():
             raise RuntimeError("Transcript is empty.")
         print(f"[DEBUG] Transcript source: youtube-transcript-api v1.x fetch()")
@@ -88,8 +119,7 @@ def get_transcript(video_id: str) -> str:
             raise RuntimeError("No transcript available for this video.")
 
         data = transcript.fetch()
-        # data is a list of dicts with 'text' key
-        text = " ".join(item["text"] for item in data)
+        text = process_snippets(data)
         if not text.strip():
             raise RuntimeError("Transcript is empty.")
         print(f"[DEBUG] Transcript source: list_transcripts fallback")
@@ -199,3 +229,45 @@ def generate_mcq_quiz(vector_store: FAISS, model_name: str = "llama3", num_quest
         f"CONTENT:\n{context}"
     )
     return _llm_invoke(model_name, prompt)
+
+
+def timestamp_to_seconds(ts: str) -> int:
+    parts = list(map(int, ts.split(":")))
+    if len(parts) == 3:
+        return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    elif len(parts) == 2:
+        return parts[0] * 60 + parts[1]
+    return 0
+
+
+def answer_question_with_sources(question: str, vector_store: FAISS, model_name: str = "llama3") -> Tuple[str, List[str]]:
+    if not question or not question.strip():
+        raise ValueError("Question is empty.")
+    
+    docs = vector_store.similarity_search(question, k=5)
+    
+    timestamps = []
+    for d in docs:
+        matches = re.findall(r"\[(\d{1,2}:\d{2}(?::\d{2})?)\]", d.page_content)
+        if matches:
+            timestamps.append(matches[0])
+            
+    seen = set()
+    unique_timestamps = []
+    for ts in timestamps:
+        if ts not in seen:
+            seen.add(ts)
+            unique_timestamps.append(ts)
+            
+    context = "\n\n---\n\n".join(d.page_content for d in docs)
+    if not context:
+        return "The information is not available in the video transcript.", []
+        
+    prompt = (
+        "Answer the QUESTION using ONLY the CONTEXT below. "
+        "If the answer is not in the CONTEXT, reply: The information is not available in the video transcript.\n\n"
+        f"CONTEXT:\n{context}\n\nQUESTION:\n{question}\n\nAnswer concisely."
+    )
+    
+    answer = _llm_invoke(model_name, prompt)
+    return answer, unique_timestamps

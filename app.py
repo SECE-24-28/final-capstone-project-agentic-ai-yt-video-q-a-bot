@@ -5,6 +5,7 @@ from chatbot import (
     extract_video_id, get_transcript, create_vector_store,
     answer_question, generate_summary, generate_key_topics,
     generate_qa_pairs, generate_mcq_quiz,
+    answer_question_with_sources, timestamp_to_seconds,
 )
 from quiz_parser import parse_mcq, grade_quiz, export_txt
 from utils import get_error_message
@@ -492,6 +493,45 @@ div[data-testid="stChatInput"] button svg {
     height: 16px !important;
 }
 
+/* Chat Source links */
+.src-wrap {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #262626;
+}
+.src-hdr {
+    font-size: 11px;
+    font-weight: 600;
+    color: #71717A;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+}
+.src-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.src-link {
+    background-color: rgba(16, 163, 127, 0.1) !important;
+    color: #10A37F !important;
+    border: 1px solid rgba(16, 163, 127, 0.2) !important;
+    border-radius: 12px !important;
+    padding: 2px 10px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    transition: all 0.15s ease !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+.src-link:hover {
+    background-color: #10A37F !important;
+    color: #FFFFFF !important;
+    border-color: #10A37F !important;
+    transform: translateY(-1px);
+}
+
 /* Q&A Cards */
 .qa-card {
     background: #171717;
@@ -742,11 +782,32 @@ def do_load(url: str, model: str):
 # ── SIDEBAR ────────────────────────────────────────────────────────────────────
 with st.sidebar:
 
-    # 1. Header (Centered, compact, no logo)
+    # 1. Header (Centered, compact, with logo)
     st.markdown("""
-    <div class="sb-header">
-        <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em;">YouTube Intelligence</div>
-        <div style="font-size: 12px; color: #A1A1AA; margin-top: 4px;">AI Video Analysis</div>
+    <div class="sb-header" style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-left: 4px;">
+        <div class="sb-logo" style="flex-shrink: 0;">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#10A37F" />
+                        <stop offset="100%" stop-color="#059669" />
+                    </linearGradient>
+                    <linearGradient id="glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#34D399" stop-opacity="0.15" />
+                        <stop offset="100%" stop-color="#10A37F" stop-opacity="0.0" />
+                    </linearGradient>
+                </defs>
+                <circle cx="12" cy="12" r="10" fill="url(#glow-grad)" stroke="#10A37F" stroke-width="1.5" stroke-dasharray="3 3" />
+                <path d="M9.5 7.5L16.5 12L9.5 16.5V7.5Z" fill="url(#logo-grad)" stroke="#10A37F" stroke-width="1" stroke-linejoin="round" />
+                <circle cx="9.5" cy="7.5" r="1.2" fill="#FFFFFF" />
+                <circle cx="16.5" cy="12" r="1.2" fill="#FFFFFF" />
+                <circle cx="9.5" cy="16.5" r="1.2" fill="#FFFFFF" />
+            </svg>
+        </div>
+        <div>
+            <div style="font-size: 16px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.02em; line-height: 1.25;">YouTube Intelligence</div>
+            <div style="font-size: 11px; color: #71717A; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 2px; font-weight: 600;">AI Video Analysis</div>
+        </div>
     </div>""", unsafe_allow_html=True)
 
     # 2. New Analysis (Centered, single button, 160px x 38px)
@@ -906,11 +967,28 @@ with st.sidebar:
 # ── MAIN WORKSPACE ────────────────────────────────────────────────────────────
 st.markdown('<div class="content-wrap">', unsafe_allow_html=True)
 
-# Main Title Block
+# Main Logo Block (Centered logo at the top of the main area)
 st.markdown("""
-<div class="page-hdr">
-    <div class="page-hdr-title">YouTube Intelligence</div>
-    <div class="page-hdr-sub">Analyze and chat with YouTube videos using local AI</div>
+<div class="page-hdr" style="display: flex; justify-content: center; align-items: center; border-bottom: none; margin-bottom: 24px; padding-bottom: 0;">
+    <div class="main-logo-wrap" style="transform: scale(1.5); padding: 8px;">
+        <svg viewBox="0 0 24 24" width="48" height="48" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="main-logo-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#10A37F" />
+                    <stop offset="100%" stop-color="#059669" />
+                </linearGradient>
+                <linearGradient id="main-glow-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#34D399" stop-opacity="0.15" />
+                    <stop offset="100%" stop-color="#10A37F" stop-opacity="0.0" />
+                </linearGradient>
+            </defs>
+            <circle cx="12" cy="12" r="10" fill="url(#main-glow-grad)" stroke="#10A37F" stroke-width="1.5" stroke-dasharray="3 3" />
+            <path d="M9.5 7.5L16.5 12L9.5 16.5V7.5Z" fill="url(#main-logo-grad)" stroke="#10A37F" stroke-width="1" stroke-linejoin="round" />
+            <circle cx="9.5" cy="7.5" r="1.2" fill="#FFFFFF" />
+            <circle cx="16.5" cy="12" r="1.2" fill="#FFFFFF" />
+            <circle cx="9.5" cy="16.5" r="1.2" fill="#FFFFFF" />
+        </svg>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -1001,10 +1079,28 @@ if st.session_state.active_panel == "chat":
                     <div class="cbody"><div class="crole">You</div><div class="ctext">{m["text"]}</div></div>
                 </div>""", unsafe_allow_html=True)
             else:
+                sources_html = ""
+                if m.get("sources"):
+                    links = []
+                    for ts in m["sources"]:
+                        secs = timestamp_to_seconds(ts)
+                        vid = st.session_state.video_id
+                        url = f"https://youtu.be/{vid}?t={secs}"
+                        links.append(f'<a href="{url}" target="_blank" class="src-link">{ts}</a>')
+                    sources_html = f"""
+                    <div class="src-wrap">
+                        <div class="src-hdr">Sources</div>
+                        <div class="src-links">{' '.join(links)}</div>
+                    </div>
+                    """
                 st.markdown(f"""
                 <div class="cmsg">
                     <div class="cavatar cav-a">{si(IC["bot"],12,"#71717A")}</div>
-                    <div class="cbody"><div class="crole">AI</div><div class="ctext">{m["text"]}</div></div>
+                    <div class="cbody">
+                        <div class="crole">AI</div>
+                        <div class="ctext">{m["text"]}</div>
+                        {sources_html}
+                    </div>
                 </div>""", unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -1019,15 +1115,15 @@ if st.session_state.active_panel == "chat":
             st.session_state.questions_asked += 1
             with st.spinner("Thinking..."):
                 try:
-                    ans = answer_question(question, st.session_state.vector_store, model_name)
-                    st.session_state.chat_history.append({"role": "assistant", "text": ans})
+                    ans, sources = answer_question_with_sources(question, st.session_state.vector_store, model_name)
+                    st.session_state.chat_history.append({"role": "assistant", "text": ans, "sources": sources})
                     st.session_state.last_error = ""
                 except RuntimeError as e:
                     err = get_error_message("ollama_not_running") if "Ollama" in str(e) else str(e)
-                    st.session_state.chat_history.append({"role": "assistant", "text": f"Error: {err}"})
+                    st.session_state.chat_history.append({"role": "assistant", "text": f"Error: {err}", "sources": []})
                     st.session_state.last_error = err
                 except Exception as e:
-                    st.session_state.chat_history.append({"role": "assistant", "text": f"Error: {e}"})
+                    st.session_state.chat_history.append({"role": "assistant", "text": f"Error: {e}", "sources": []})
                     st.session_state.last_error = str(e)
             st.rerun()
 
