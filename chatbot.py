@@ -271,3 +271,16 @@ def answer_question_with_sources(question: str, vector_store: FAISS, model_name:
     
     answer = _llm_invoke(model_name, prompt)
     return answer, unique_timestamps
+
+
+def translate_text(text: str, target_language: str, model_name: str = "llama3") -> str:
+    if not text or not text.strip():
+        return ""
+    prompt = (
+        f"Translate the following TEXT to {target_language}. "
+        "Maintain the exact formatting, paragraph breaks, and bullet points. "
+        "Do not add any preamble, explanations, or notes. Output ONLY the translation.\n\n"
+        f"TEXT:\n{text}"
+    )
+    return _llm_invoke(model_name, prompt)
+

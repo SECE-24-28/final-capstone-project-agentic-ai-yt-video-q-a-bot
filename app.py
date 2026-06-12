@@ -6,9 +6,11 @@ from chatbot import (
     answer_question, generate_summary, generate_key_topics,
     generate_qa_pairs, generate_mcq_quiz,
     answer_question_with_sources, timestamp_to_seconds,
+    translate_text,
 )
 from quiz_parser import parse_mcq, grade_quiz, export_txt
 from utils import get_error_message
+import session_manager as sm
 
 st.set_page_config(page_title="YouTube Intelligence", layout="wide", initial_sidebar_state="expanded")
 
@@ -148,6 +150,30 @@ div[data-testid="stSidebar"] div[data-testid="stTextInput"]:has(input[id="mdl"])
     overflow: hidden;
     text-overflow: ellipsis;
     font-weight: 500;
+}
+
+/* Interactive Recent Session buttons in sidebar */
+div[class*="st-key-sb_sess_"] button {
+    justify-content: flex-start !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    text-align: left !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #A1A1AA !important;
+    background-color: #171717 !important;
+    border: 1px solid #262626 !important;
+    margin-bottom: 6px !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+div[class*="st-key-sb_sess_"] button:hover {
+    background-color: #2A2A2A !important;
+    border-color: #3A3A3A !important;
+    color: #FFFFFF !important;
 }
 
 /* Status Info Section */
@@ -441,6 +467,41 @@ div.st-key-lbtn button {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
+/* Translate section */
+.translate-container {
+    background: #171717 !important;
+    border: 1px solid #262626 !important;
+    border-radius: 12px !important;
+    padding: 16px 20px !important;
+    margin-bottom: 24px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+.translate-title {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #8E8E93 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    margin-bottom: 12px !important;
+}
+.translate-buttons-wrap div.stButton button {
+    background-color: #262626 !important;
+    border: 1px solid #3A3A3A !important;
+    color: #E4E4E7 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    height: 36px !important;
+    transition: all 0.15s ease !important;
+}
+.translate-buttons-wrap div.stButton button:hover {
+    background-color: #2E2E2E !important;
+    border-color: #10A37F !important;
+    color: #FFFFFF !important;
+    box-shadow: 0 0 10px rgba(16, 163, 127, 0.25) !important;
+    transform: translateY(-1px) !important;
+}
+
 /* Chat GPT Bottom Sticky Input Field overrides */
 .stChatInputContainer {
     position: fixed !important;
@@ -717,7 +778,7 @@ IC = {
 def init_state():
     for k, v in {
         "vector_store": None, "transcript": "", "num_chunks": 0,
-        "video_id": None, "last_output": "", "last_error": "",
+        "video_id": None, "last_output": "", "original_output": "", "last_error": "",
         "chat_history": [], "session_history": [],
         "questions_asked": 0, "transcript_loaded": False,
         "qa_pairs_raw": "",
@@ -725,6 +786,7 @@ def init_state():
         "quiz_submitted": False, "quiz_history": [],
         "active_panel": "chat",
         "mdl": "llama3",
+        "current_session_id": None,
     }.items():
         if k not in st.session_state:
             st.session_state[k] = v
@@ -732,6 +794,34 @@ def init_state():
 init_state()
 
 model_name = st.session_state.get("mdl", "llama3")
+
+
+_orig_rerun = st.rerun
+
+
+def sync_session_to_file():
+    if st.session_state.current_session_id:
+        updates = {
+            "chat_history": st.session_state.chat_history,
+            "qa_pairs_raw": st.session_state.qa_pairs_raw,
+            "quiz_questions": st.session_state.quiz_questions,
+            "quiz_answers": st.session_state.quiz_answers,
+            "quiz_result": st.session_state.quiz_result,
+            "quiz_submitted": st.session_state.quiz_submitted,
+            "last_output": st.session_state.last_output,
+            "original_output": st.session_state.original_output,
+        }
+        sm.update_session(st.session_state.current_session_id, updates)
+
+
+def rerun_app():
+    sync_session_to_file()
+    _orig_rerun()
+
+
+st.rerun = rerun_app
+
+
 
 
 # ── BACKEND WRAPPERS ───────────────────────────────────────────────────────────
@@ -747,6 +837,7 @@ def check_ollama(model: str):
 def do_load(url: str, model: str):
     st.session_state.last_error = ""
     st.session_state.last_output = ""
+    st.session_state.original_output = ""
     try:
         vid = extract_video_id(url)
     except ValueError as e:
@@ -756,8 +847,24 @@ def do_load(url: str, model: str):
     print(f"[DEBUG] URL={url}  ID={vid}")
     st.session_state.video_id = vid
     try:
-        transcript = get_transcript(vid)
-        vs, nc = create_vector_store(transcript)
+        # Check cache in JSON database
+        cached_video = sm.get_cached_video(vid)
+        if cached_video:
+            transcript = cached_video["transcript"]
+            title = cached_video["title"]
+            vs, nc = create_vector_store(transcript)
+            print(f"[SM] Loaded video {vid} from cache.")
+        else:
+            transcript = get_transcript(vid)
+            vs, nc = create_vector_store(transcript)
+            title = sm.fetch_video_title(vid)
+            print(f"[SM] Fetched and cached new video {vid}.")
+
+        # Create session in JSON database
+        session_id = sm.create_session(vid, title, transcript, nc)
+        st.session_state.current_session_id = session_id
+
+        # Update Session State
         st.session_state.transcript = transcript
         st.session_state.vector_store = vs
         st.session_state.num_chunks = nc
@@ -768,10 +875,8 @@ def do_load(url: str, model: str):
         st.session_state.quiz_submitted = False
         st.session_state.quiz_answers = {}
         st.session_state.qa_pairs_raw = ""
-        st.session_state.session_history = (
-            [{"vid": vid, "ts": datetime.now().strftime("%H:%M")}]
-            + st.session_state.session_history
-        )[:10]
+        st.session_state.last_output = ""
+        st.session_state.original_output = ""
         return True, f"{nc} chunks indexed", vid
     except Exception as e:
         st.session_state.transcript_loaded = False
@@ -832,23 +937,59 @@ with st.sidebar:
     with st.expander("Settings", expanded=False):
         model_name = st.text_input("Ollama Model", key="mdl", label_visibility="collapsed")
 
-    # 4. Recent Sessions (Compact cards, no timestamps, fallback to specified names)
+    # 4. Recent Sessions (Connected to JSON database and fully interactive)
     st.markdown('<div class="sb-group">Recent Sessions</div>', unsafe_allow_html=True)
     
-    sessions_to_show = []
-    if st.session_state.session_history:
-        for it in st.session_state.session_history[:5]:
-            label = it.get("title") or it["vid"]
-            sessions_to_show.append(label)
+    db_sessions = sm.list_recent_sessions(limit=5)
+    if db_sessions:
+        for sess in db_sessions:
+            sess_id = sess["session_id"]
+            sess_title = sess.get("title") or sess.get("video_id") or "Untitled Session"
+            # Limit display title length
+            display_title = sess_title[:24] + "..." if len(sess_title) > 24 else sess_title
+            
+            # Render custom sidebar button for the session
+            if st.button(f"💬 {display_title}", key=f"sb_sess_{sess_id}", use_container_width=True):
+                # Load session details
+                session = sm.get_session(sess_id)
+                if session:
+                    video_id = session["video_id"]
+                    transcript = session.get("transcript")
+                    if transcript:
+                        # Restore state variables
+                        st.session_state.current_session_id = sess_id
+                        st.session_state.video_id = video_id
+                        st.session_state.transcript = transcript
+                        st.session_state.num_chunks = session.get("num_chunks", 0)
+                        st.session_state.transcript_loaded = True
+                        
+                        # Re-create vector store in memory
+                        with st.spinner("Rebuilding video index..."):
+                            vs, _ = create_vector_store(transcript)
+                            st.session_state.vector_store = vs
+                        
+                        # Restore session state variables
+                        st.session_state.chat_history = session.get("chat_history", [])
+                        st.session_state.qa_pairs_raw = session.get("qa_pairs_raw", "")
+                        st.session_state.quiz_questions = session.get("quiz_questions", [])
+                        st.session_state.quiz_answers = session.get("quiz_answers", {})
+                        st.session_state.quiz_result = session.get("quiz_result", None)
+                        st.session_state.quiz_submitted = session.get("quiz_submitted", False)
+                        st.session_state.last_output = session.get("last_output", "")
+                        st.session_state.original_output = session.get("original_output", "")
+                        
+                        # Switch to chat panel and rerun
+                        st.session_state.active_panel = "chat"
+                        st.rerun()
     else:
+        # Fallback names when JSON database is empty
         sessions_to_show = ["Agentic AI Lecture", "LangChain Tutorial", "Python Basics"]
-        
-    for label in sessions_to_show:
-        st.markdown(f"""
-        <div class="sb-recent-card">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-            <span class="sb-recent-label">{label}</span>
-        </div>""", unsafe_allow_html=True)
+        for label in sessions_to_show:
+            st.markdown(f"""
+            <div class="sb-recent-card">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                <span class="sb-recent-label">{label}</span>
+            </div>""", unsafe_allow_html=True)
 
     # 5. AI Tools
     st.markdown('<div class="sb-group">AI Tools</div>', unsafe_allow_html=True)
@@ -863,6 +1004,7 @@ with st.sidebar:
                     try:
                         res = generate_summary(st.session_state.vector_store, model_name)
                         st.session_state.last_output = res
+                        st.session_state.original_output = res
                         st.session_state.active_panel = "chat"
                         st.session_state.last_error = ""
                     except Exception as e:
@@ -876,6 +1018,7 @@ with st.sidebar:
                     try:
                         res = generate_key_topics(st.session_state.vector_store, model_name)
                         st.session_state.last_output = res
+                        st.session_state.original_output = res
                         st.session_state.active_panel = "chat"
                         st.session_state.last_error = ""
                     except Exception as e:
@@ -891,6 +1034,7 @@ with st.sidebar:
                     try:
                         res = generate_key_topics(st.session_state.vector_store, model_name)
                         st.session_state.last_output = res
+                        st.session_state.original_output = res
                         st.session_state.active_panel = "chat"
                         st.session_state.last_error = ""
                     except Exception as e:
@@ -945,6 +1089,7 @@ with st.sidebar:
                 st.session_state.last_error = "Load a video first."
             else:
                 st.session_state.last_output = st.session_state.transcript[:3000]
+                st.session_state.original_output = st.session_state.transcript[:3000]
                 st.session_state.active_panel = "chat"
                 st.session_state.last_error = ""
     with col2:
@@ -1067,6 +1212,57 @@ if st.session_state.active_panel == "chat":
     if st.session_state.last_output:
         st.markdown(f'<div class="sec-hd">Result</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="res-card">{st.session_state.last_output}</div>', unsafe_allow_html=True)
+
+        # Translation block (Multi-Language Learning)
+        st.markdown('<div class="translate-container"><div class="translate-title">Multi-Language Translation</div><div class="translate-buttons-wrap">', unsafe_allow_html=True)
+        col1_t, col2_t, col3_t, col4_t = st.columns(4)
+        
+        with col1_t:
+            if st.button("🇬🇧 English", key="lang_en", use_container_width=True):
+                if st.session_state.original_output:
+                    with st.spinner("Translating..."):
+                        try:
+                            translated = translate_text(st.session_state.original_output, "English", model_name)
+                            st.session_state.last_output = translated
+                            st.session_state.last_error = ""
+                        except Exception as e:
+                            st.session_state.last_error = str(e)
+                        st.rerun()
+        with col2_t:
+            if st.button("🇮🇳 Tamil", key="lang_ta", use_container_width=True):
+                if st.session_state.original_output:
+                    with st.spinner("Translating to Tamil..."):
+                        try:
+                            translated = translate_text(st.session_state.original_output, "Tamil", model_name)
+                            st.session_state.last_output = translated
+                            st.session_state.last_error = ""
+                        except Exception as e:
+                            st.session_state.last_error = str(e)
+                        st.rerun()
+        with col3_t:
+            if st.button("🇮🇳 Hindi", key="lang_hi", use_container_width=True):
+                if st.session_state.original_output:
+                    with st.spinner("Translating to Hindi..."):
+                        try:
+                            translated = translate_text(st.session_state.original_output, "Hindi", model_name)
+                            st.session_state.last_output = translated
+                            st.session_state.last_error = ""
+                        except Exception as e:
+                            st.session_state.last_error = str(e)
+                        st.rerun()
+        with col4_t:
+            if st.button("🇦🇪 Arabic", key="lang_ar", use_container_width=True):
+                if st.session_state.original_output:
+                    with st.spinner("Translating to Arabic..."):
+                        try:
+                            translated = translate_text(st.session_state.original_output, "Arabic", model_name)
+                            st.session_state.last_output = translated
+                            st.session_state.last_error = ""
+                        except Exception as e:
+                            st.session_state.last_error = str(e)
+                        st.rerun()
+        st.markdown('</div></div>', unsafe_allow_html=True)
+
 
     if st.session_state.chat_history:
         st.markdown(f'<div class="sec-hd">Conversation</div>', unsafe_allow_html=True)
@@ -1288,3 +1484,5 @@ elif st.session_state.active_panel == "quiz":
                     <span style="font-size:13px;font-weight:700;color:{gc};">{hr['grade']}</span>
                 </div>""", unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
+
+sync_session_to_file()
