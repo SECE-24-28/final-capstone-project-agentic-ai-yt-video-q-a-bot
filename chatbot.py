@@ -160,6 +160,21 @@ def _get_context(vector_store: FAISS, query: str, k: int) -> str:
     return "\n\n---\n\n".join(d.page_content for d in docs)
 
 
+def _get_all_context(vector_store: FAISS) -> str:
+    ordered_docs = []
+    if hasattr(vector_store, "index_to_docstore_id") and isinstance(vector_store.index_to_docstore_id, dict):
+        for i in range(len(vector_store.index_to_docstore_id)):
+            doc_id = vector_store.index_to_docstore_id.get(i)
+            if doc_id:
+                doc = vector_store.docstore.search(doc_id)
+                if doc:
+                    ordered_docs.append(doc.page_content)
+    else:
+        docs = list(vector_store.docstore._dict.values())
+        ordered_docs = [d.page_content for d in docs]
+    return "\n\n---\n\n".join(ordered_docs)
+
+
 def answer_question(question: str, vector_store: FAISS, model_name: str = "llama3") -> str:
     if not question or not question.strip():
         raise ValueError("Question is empty.")
@@ -175,7 +190,7 @@ def answer_question(question: str, vector_store: FAISS, model_name: str = "llama
 
 
 def generate_summary(vector_store: FAISS, model_name: str = "llama3") -> str:
-    context = _get_context(vector_store, "", k=6)
+    context = _get_all_context(vector_store)
     prompt = (
         "Summarize the CONTENT below in 3-6 sentences.\n\n"
         f"CONTENT:\n{context}"
@@ -184,7 +199,7 @@ def generate_summary(vector_store: FAISS, model_name: str = "llama3") -> str:
 
 
 def generate_key_topics(vector_store: FAISS, model_name: str = "llama3") -> str:
-    context = _get_context(vector_store, "", k=8)
+    context = _get_all_context(vector_store)
     prompt = (
         "List 6-12 key topics as bullet points from the CONTENT below.\n\n"
         f"CONTENT:\n{context}"
@@ -193,7 +208,7 @@ def generate_key_topics(vector_store: FAISS, model_name: str = "llama3") -> str:
 
 
 def generate_quiz(vector_store: FAISS, model_name: str = "llama3") -> str:
-    context = _get_context(vector_store, "", k=8)
+    context = _get_all_context(vector_store)
     prompt = (
         "Generate a 5-question multiple-choice quiz (question + 4 options + correct answer) "
         "based ONLY on the CONTENT below.\n\n"
@@ -203,7 +218,7 @@ def generate_quiz(vector_store: FAISS, model_name: str = "llama3") -> str:
 
 
 def generate_qa_pairs(vector_store: FAISS, model_name: str = "llama3") -> str:
-    context = _get_context(vector_store, "", k=8)
+    context = _get_all_context(vector_store)
     prompt = (
         "Generate 6 question-and-answer pairs from the CONTENT below.\n"
         "Format each pair exactly as:\n"
@@ -216,7 +231,7 @@ def generate_qa_pairs(vector_store: FAISS, model_name: str = "llama3") -> str:
 
 
 def generate_mcq_quiz(vector_store: FAISS, model_name: str = "llama3", num_questions: int = 7) -> str:
-    context = _get_context(vector_store, "", k=10)
+    context = _get_all_context(vector_store)
     prompt = (
         f"Generate exactly {num_questions} multiple-choice questions from the CONTENT below.\n"
         "Return ONLY valid JSON — no explanation, no markdown, no code fences.\n"

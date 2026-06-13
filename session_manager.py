@@ -143,3 +143,17 @@ def list_recent_sessions(limit: int = 10) -> list:
     except Exception:
         pass
     return sessions[:limit]
+
+
+def delete_session(session_id: str) -> bool:
+    """
+    Deletes a session by ID.
+    """
+    if not session_id:
+        return False
+    sessions = load_all_sessions()
+    initial_len = len(sessions)
+    sessions = [sess for sess in sessions if sess.get("session_id") != session_id]
+    if len(sessions) < initial_len:
+        return save_all_sessions(sessions)
+    return False

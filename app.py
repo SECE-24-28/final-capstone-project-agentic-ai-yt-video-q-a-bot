@@ -176,6 +176,25 @@ div[class*="st-key-sb_sess_"] button:hover {
     color: #FFFFFF !important;
 }
 
+/* Delete Session Button in sidebar */
+div[class*="st-key-sb_del_"] button {
+    background-color: #171717 !important;
+    border: 1px solid #262626 !important;
+    color: #EF4444 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    margin-bottom: 6px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+div[class*="st-key-sb_del_"] button:hover {
+    background-color: #EF4444 !important;
+    border-color: #EF4444 !important;
+    color: #FFFFFF !important;
+}
+
 /* Status Info Section */
 .sb-status-footer {
     margin-top: auto;
@@ -948,48 +967,65 @@ with st.sidebar:
             # Limit display title length
             display_title = sess_title[:24] + "..." if len(sess_title) > 24 else sess_title
             
-            # Render custom sidebar button for the session
-            if st.button(f"💬 {display_title}", key=f"sb_sess_{sess_id}", use_container_width=True):
-                # Load session details
-                session = sm.get_session(sess_id)
-                if session:
-                    video_id = session["video_id"]
-                    transcript = session.get("transcript")
-                    if transcript:
-                        # Restore state variables
-                        st.session_state.current_session_id = sess_id
-                        st.session_state.video_id = video_id
-                        st.session_state.transcript = transcript
-                        st.session_state.num_chunks = session.get("num_chunks", 0)
-                        st.session_state.transcript_loaded = True
-                        
-                        # Re-create vector store in memory
-                        with st.spinner("Rebuilding video index..."):
-                            vs, _ = create_vector_store(transcript)
-                            st.session_state.vector_store = vs
-                        
-                        # Restore session state variables
-                        st.session_state.chat_history = session.get("chat_history", [])
-                        st.session_state.qa_pairs_raw = session.get("qa_pairs_raw", "")
-                        st.session_state.quiz_questions = session.get("quiz_questions", [])
-                        st.session_state.quiz_answers = session.get("quiz_answers", {})
-                        st.session_state.quiz_result = session.get("quiz_result", None)
-                        st.session_state.quiz_submitted = session.get("quiz_submitted", False)
-                        st.session_state.last_output = session.get("last_output", "")
-                        st.session_state.original_output = session.get("original_output", "")
-                        
-                        # Switch to chat panel and rerun
-                        st.session_state.active_panel = "chat"
-                        st.rerun()
+            col_sess, col_del = st.columns([4.2, 0.8], gap="small")
+            with col_sess:
+                if st.button(f"💬 {display_title}", key=f"sb_sess_{sess_id}", use_container_width=True):
+                    # Load session details
+                    session = sm.get_session(sess_id)
+                    if session:
+                        video_id = session["video_id"]
+                        transcript = session.get("transcript")
+                        if transcript:
+                            # Restore state variables
+                            st.session_state.current_session_id = sess_id
+                            st.session_state.video_id = video_id
+                            st.session_state.transcript = transcript
+                            st.session_state.num_chunks = session.get("num_chunks", 0)
+                            st.session_state.transcript_loaded = True
+                            
+                            # Re-create vector store in memory
+                            with st.spinner("Rebuilding video index..."):
+                                vs, _ = create_vector_store(transcript)
+                                st.session_state.vector_store = vs
+                            
+                            # Restore session state variables
+                            st.session_state.chat_history = session.get("chat_history", [])
+                            st.session_state.qa_pairs_raw = session.get("qa_pairs_raw", "")
+                            st.session_state.quiz_questions = session.get("quiz_questions", [])
+                            st.session_state.quiz_answers = session.get("quiz_answers", {})
+                            st.session_state.quiz_result = session.get("quiz_result", None)
+                            st.session_state.quiz_submitted = session.get("quiz_submitted", False)
+                            st.session_state.last_output = session.get("last_output", "")
+                            st.session_state.original_output = session.get("original_output", "")
+                            
+                            # Switch to chat panel and rerun
+                            st.session_state.active_panel = "chat"
+                            st.rerun()
+            with col_del:
+                if st.button("🗑️", key=f"sb_del_{sess_id}", use_container_width=True):
+                    sm.delete_session(sess_id)
+                    # If this was the active session, clear the active session state
+                    if st.session_state.current_session_id == sess_id:
+                        for k, default in [
+                            ("vector_store", None), ("transcript", ""), ("num_chunks", 0),
+                            ("video_id", None), ("last_output", ""), ("original_output", ""),
+                            ("chat_history", []), ("quiz_questions", []), ("quiz_answers", {}),
+                            ("quiz_result", None), ("quiz_submitted", False),
+                            ("qa_pairs_raw", ""), ("transcript_loaded", False),
+                        ]:
+                            st.session_state[k] = default
+                    st.rerun()
     else:
         # Fallback names when JSON database is empty
         sessions_to_show = ["Agentic AI Lecture", "LangChain Tutorial", "Python Basics"]
         for label in sessions_to_show:
-            st.markdown(f"""
-            <div class="sb-recent-card">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-                <span class="sb-recent-label">{label}</span>
-            </div>""", unsafe_allow_html=True)
+            recent_html = (
+                '<div class="sb-recent-card">'
+                '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>'
+                f'<span class="sb-recent-label">{label}</span>'
+                '</div>'
+            )
+            st.markdown(recent_html, unsafe_allow_html=True)
 
     # 5. AI Tools
     st.markdown('<div class="sb-group">AI Tools</div>', unsafe_allow_html=True)
@@ -1084,7 +1120,7 @@ with st.sidebar:
     
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Transcript", key="t_tr"):
+        if st.button("Transcript", key="t_tr", use_container_width=True):
             if not st.session_state.transcript:
                 st.session_state.last_error = "Load a video first."
             else:
@@ -1093,20 +1129,32 @@ with st.sidebar:
                 st.session_state.active_panel = "chat"
                 st.session_state.last_error = ""
     with col2:
-        if st.button("Export", key="t_export"):
-            st.session_state.last_error = "PDF export: use Download TXT from quiz results."
+        if not st.session_state.transcript:
+            if st.button("Export", key="t_export", use_container_width=True):
+                st.session_state.last_error = "Load a video first."
+        else:
+            st.download_button(
+                label="Export",
+                data=st.session_state.transcript,
+                file_name=f"transcript_{st.session_state.video_id or 'unknown'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
+                mime="text/plain",
+                key="t_export_download",
+                use_container_width=True
+            )
 
     # 8. Status footer (Compact style moved to bottom)
     ollama_color = "#10B981" if ollama_ok else "#EF4444"
     model_color = "#10B981" if model_found else ("#F59E0B" if ollama_ok else "#EF4444")
     tr_color = "#10B981" if tr_loaded else "#3F3F46"
     
-    st.markdown(f"""
-    <div class="sb-status-footer">
-        <div class="sb-status-item"><span class="sb-status-dot" style="background-color: {ollama_color};"></span>Ollama {'Online' if ollama_ok else 'Offline'}</div>
-        <div class="sb-status-item"><span class="sb-status-dot" style="background-color: {tr_color};"></span>Transcript {'Loaded' if tr_loaded else 'Not Loaded'}</div>
-        <div class="sb-status-item"><span class="sb-status-dot" style="background-color: {model_color};"></span>{model_name}</div>
-    </div>""", unsafe_allow_html=True)
+    status_html = (
+        '<div class="sb-status-footer">'
+        f'<div class="sb-status-item"><span class="sb-status-dot" style="background-color: {ollama_color};"></span>Ollama {"Online" if ollama_ok else "Offline"}</div>'
+        f'<div class="sb-status-item"><span class="sb-status-dot" style="background-color: {tr_color};"></span>Transcript {"Loaded" if tr_loaded else "Not Loaded"}</div>'
+        f'<div class="sb-status-item"><span class="sb-status-dot" style="background-color: {model_color};"></span>{model_name}</div>'
+        '</div>'
+    )
+    st.markdown(status_html, unsafe_allow_html=True)
 
 
 # ── MAIN WORKSPACE ────────────────────────────────────────────────────────────
@@ -1269,11 +1317,13 @@ if st.session_state.active_panel == "chat":
         st.markdown('<div class="chat-wrap">', unsafe_allow_html=True)
         for m in st.session_state.chat_history:
             if m["role"] == "user":
-                st.markdown(f"""
-                <div class="cmsg cmsg-user">
-                    <div class="cavatar cav-u">You</div>
-                    <div class="cbody"><div class="crole">You</div><div class="ctext">{m["text"]}</div></div>
-                </div>""", unsafe_allow_html=True)
+                user_html = (
+                    '<div class="cmsg cmsg-user">'
+                    '<div class="cavatar cav-u">You</div>'
+                    f'<div class="cbody"><div class="crole">You</div><div class="ctext">{m["text"]}</div></div>'
+                    '</div>'
+                )
+                st.markdown(user_html, unsafe_allow_html=True)
             else:
                 sources_html = ""
                 if m.get("sources"):
@@ -1283,21 +1333,23 @@ if st.session_state.active_panel == "chat":
                         vid = st.session_state.video_id
                         url = f"https://youtu.be/{vid}?t={secs}"
                         links.append(f'<a href="{url}" target="_blank" class="src-link">{ts}</a>')
-                    sources_html = f"""
-                    <div class="src-wrap">
-                        <div class="src-hdr">Sources</div>
-                        <div class="src-links">{' '.join(links)}</div>
-                    </div>
-                    """
-                st.markdown(f"""
-                <div class="cmsg">
-                    <div class="cavatar cav-a">{si(IC["bot"],12,"#71717A")}</div>
-                    <div class="cbody">
-                        <div class="crole">AI</div>
-                        <div class="ctext">{m["text"]}</div>
-                        {sources_html}
-                    </div>
-                </div>""", unsafe_allow_html=True)
+                    sources_html = (
+                        '<div class="src-wrap">'
+                        '<div class="src-hdr">Sources</div>'
+                        f'<div class="src-links">{" ".join(links)}</div>'
+                        '</div>'
+                    )
+                assistant_html = (
+                    '<div class="cmsg">'
+                    f'<div class="cavatar cav-a">{si(IC["bot"], 12, "#71717A")}</div>'
+                    '<div class="cbody">'
+                    '<div class="crole">AI</div>'
+                    f'<div class="ctext">{m["text"]}</div>'
+                    f'{sources_html}'
+                    '</div>'
+                    '</div>'
+                )
+                st.markdown(assistant_html, unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
     # ChatGPT style bottom sticky input bar
@@ -1360,11 +1412,13 @@ elif st.session_state.active_panel == "qa":
             st.markdown(f'<div class="res-card">{raw}</div>', unsafe_allow_html=True)
         else:
             for i, (q, a) in enumerate(pairs, 1):
-                st.markdown(f"""
-                <div class="qa-card">
-                    <div class="qa-q">Q{i}. {q}</div>
-                    <div class="qa-a">{a}</div>
-                </div>""", unsafe_allow_html=True)
+                qa_html = (
+                    '<div class="qa-card">'
+                    f'<div class="qa-q">Q{i}. {q}</div>'
+                    f'<div class="qa-a">{a}</div>'
+                    '</div>'
+                )
+                st.markdown(qa_html, unsafe_allow_html=True)
 
 
 # ── PANEL: QUIZ ────────────────────────────────────────────────────────────────
@@ -1388,11 +1442,13 @@ elif st.session_state.active_panel == "quiz":
         with st.form("quiz_form"):
             for i, q in enumerate(questions):
                 opts = q["options"]
-                st.markdown(f"""
-                <div class="quiz-q-card">
-                    <div class="quiz-q-num">Question {i+1} of {len(questions)}</div>
-                    <div class="quiz-q-text">{q['question']}</div>
-                </div>""", unsafe_allow_html=True)
+                quiz_html = (
+                    '<div class="quiz-q-card">'
+                    f'<div class="quiz-q-num">Question {i+1} of {len(questions)}</div>'
+                    f'<div class="quiz-q-text">{q["question"]}</div>'
+                    '</div>'
+                )
+                st.markdown(quiz_html, unsafe_allow_html=True)
                 chosen = st.radio(
                     f"q_{i}", options=list(sorted(opts.keys())),
                     format_func=lambda k, o=opts: f"{k}.  {o[k]}",
@@ -1419,23 +1475,24 @@ elif st.session_state.active_panel == "quiz":
         grade_color = {"A+": "#10B981", "A": "#10B981", "B": "#3B82F6",
                        "C": "#F59E0B", "D": "#F97316", "F": "#EF4444"}.get(result["grade"], "#A1A1AA")
 
-        st.markdown(f"""
-        <div class="score-banner">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-                <div>
-                    <div class="score-main">{result['correct']}/{result['total']}</div>
-                    <div class="score-pct">{result['percentage']}% &nbsp;&middot;&nbsp; {result['total']} questions</div>
-                </div>
-                <div class="score-grade" style="color:{grade_color};">{result['grade']}</div>
-            </div>
-            <div class="score-grid">
-                <div class="score-cell"><div class="score-cell-val">{result['total']}</div><div class="score-cell-lbl">Total</div></div>
-                <div class="score-cell"><div class="score-cell-val" style="color:#10B981;">{result['correct']}</div><div class="score-cell-lbl">Correct</div></div>
-                <div class="score-cell"><div class="score-cell-val" style="color:#EF4444;">{result['wrong']}</div><div class="score-cell-lbl">Wrong</div></div>
-                <div class="score-cell"><div class="score-cell-val" style="color:{grade_color};">{result['percentage']}%</div><div class="score-cell-lbl">Score</div></div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        score_html = (
+            '<div class="score-banner">'
+            '<div style="display:flex;align-items:center;justify-content:space-between;">'
+            '<div>'
+            f'<div class="score-main">{result["correct"]}/{result["total"]}</div>'
+            f'<div class="score-pct">{result["percentage"]}% &nbsp;&middot;&nbsp; {result["total"]} questions</div>'
+            '</div>'
+            f'<div class="score-grade" style="color:{grade_color};">{result["grade"]}</div>'
+            '</div>'
+            '<div class="score-grid">'
+            f'<div class="score-cell"><div class="score-cell-val">{result["total"]}</div><div class="score-cell-lbl">Total</div></div>'
+            f'<div class="score-cell"><div class="score-cell-val" style="color:#10B981;">{result["correct"]}</div><div class="score-cell-lbl">Correct</div></div>'
+            f'<div class="score-cell"><div class="score-cell-val" style="color:#EF4444;">{result["wrong"]}</div><div class="score-cell-lbl">Wrong</div></div>'
+            f'<div class="score-cell"><div class="score-cell-val" style="color:{grade_color};">{result["percentage"]}%</div><div class="score-cell-lbl">Score</div></div>'
+            '</div>'
+            '</div>'
+        )
+        st.markdown(score_html, unsafe_allow_html=True)
 
         dl_col, rt_col, _ = st.columns([1, 1, 3], gap="small")
         with dl_col:
@@ -1458,17 +1515,19 @@ elif st.session_state.active_panel == "quiz":
             css = "rev-correct" if r["is_correct"] else "rev-wrong"
             ua_css = "rev-val-ok" if r["is_correct"] else "rev-val-err"
             indicator = si(IC["check"], 13, "#10B981") if r["is_correct"] else si(IC["alert"], 13, "#EF4444")
-            st.markdown(f"""
-            <div class="rev-item {css}">
-                <div style="display:flex;align-items:flex-start;gap:8px;">
-                    <div style="margin-top:1px;flex-shrink:0;">{indicator}</div>
-                    <div style="flex:1;">
-                        <div class="rev-qtext">Q{r['num']}. {r['question']}</div>
-                        <div class="rev-row"><span class="rev-label">Your answer</span><span class="{ua_css}">{r['user_answer']}. {r['user_text']}</span></div>
-                        <div class="rev-row"><span class="rev-label">Correct answer</span><span class="rev-val-ok">{r['correct_answer']}. {r['correct_text']}</span></div>
-                    </div>
-                </div>
-            </div>""", unsafe_allow_html=True)
+            rev_html = (
+                f'<div class="rev-item {css}">'
+                '<div style="display:flex;align-items:flex-start;gap:8px;">'
+                f'<div style="margin-top:1px;flex-shrink:0;">{indicator}</div>'
+                '<div style="flex:1;">'
+                f'<div class="rev-qtext">Q{r["num"]}. {r["question"]}</div>'
+                f'<div class="rev-row"><span class="rev-label">Your answer</span><span class="{ua_css}">{r["user_answer"]}. {r["user_text"]}</span></div>'
+                f'<div class="rev-row"><span class="rev-label">Correct answer</span><span class="rev-val-ok">{r["correct_answer"]}. {r["correct_text"]}</span></div>'
+                '</div>'
+                '</div>'
+                '</div>'
+            )
+            st.markdown(rev_html, unsafe_allow_html=True)
 
         if len(st.session_state.quiz_history) > 1:
             st.markdown(f'<div class="sec-hd" style="margin-top:18px;">Quiz History</div>',
@@ -1476,13 +1535,15 @@ elif st.session_state.active_panel == "quiz":
             for i, hr in enumerate(reversed(st.session_state.quiz_history), 1):
                 gc = {"A+": "#10B981", "A": "#10B981", "B": "#3B82F6",
                       "C": "#F59E0B", "D": "#F97316", "F": "#EF4444"}.get(hr["grade"], "#A1A1AA")
-                st.markdown(f"""
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#111111;border:1px solid #262626;border-radius:6px;margin-bottom:5px;">
-                    <span style="font-size:12px;color:#A1A1AA;">Attempt {len(st.session_state.quiz_history)+1-i}</span>
-                    <span style="font-size:12px;color:#FFFFFF;font-weight:600;">{hr['correct']}/{hr['total']}</span>
-                    <span style="font-size:12px;color:#A1A1AA;">{hr['percentage']}%</span>
-                    <span style="font-size:13px;font-weight:700;color:{gc};">{hr['grade']}</span>
-                </div>""", unsafe_allow_html=True)
+                attempt_html = (
+                    '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 12px;background:#111111;border:1px solid #262626;border-radius:6px;margin-bottom:5px;">'
+                    f'<span style="font-size:12px;color:#A1A1AA;">Attempt {len(st.session_state.quiz_history)+1-i}</span>'
+                    f'<span style="font-size:12px;color:#FFFFFF;font-weight:600;">{hr["correct"]}/{hr["total"]}</span>'
+                    f'<span style="font-size:12px;color:#A1A1AA;">{hr["percentage"]}%</span>'
+                    f'<span style="font-size:13px;font-weight:700;color:{gc};">{hr["grade"]}</span>'
+                    '</div>'
+                )
+                st.markdown(attempt_html, unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 sync_session_to_file()
