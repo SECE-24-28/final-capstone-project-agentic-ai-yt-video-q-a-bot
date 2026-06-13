@@ -1,0 +1,215 @@
+[
+  {
+    "session_id": "aaeadd5a5afa",
+    "video_id": "xwKbtUP87Dk",
+    "title": "JavaScript Basics in 10 Minutes",
+    "transcript": "[0:03] [Music] hey everybody its Claire welcome back to another web dev Wednesday today we are moving on from HTML and CSS to JavaScript and I intend this video to be just a quick overview of the basic concepts you will need to know before going in and learning more complex functionality using JavaScript but javascript is a scripting language it adds a lot of functionality and dynamic [0:35] effects and interaction with the user on a web page so it's sort of the next step beyond just your markup and then your Styles it is the dynamic functionality that JavaScript is pretty much the industry standard to learn so just to get started these are the concepts of JavaScript that I'm going to try and cover real quick today and we will continue revisiting these of course as we get further into the topic but these are just some terms that you will need [1:05] to understand as well as understanding how they interact with each other before moving on so we're going to be covering variables which is like a container for some content so the content of variables can change it's just a way to refer to elements that may take a more code space with just like a short quick name and it's usually semantic so it helps readability in your code events are things like clicking and scrolling and [1:37] things happening on your page that JavaScript can then react to or you can attach some functionality to different events and then functions are a way to put a bunch of code into this function which you name and then you can refer to it in your code a bunch of times or here and there or attach it to events and again it's another way to prevent repeating code and refer to a functionality with just a usually a semantics name that makes it clear what is going to be doing and I'm going to [2:09] touch on conditional statements which are usually part of function so conditional is just if-else so we're going to test a condition so if something is a certain way do this else do something else and this will again make since as we get going okay so this is just a little page I put together you can see in the mark up here we have a button and we have a div with the ID of changeme and then over here okay and [2:41] then you see we link to this style sheet which is just targeting this changeme div making it a square giving it a little bit of a margin centering it and giving it a background color and I just centered everything on the page and then down here at the bottom this is something new this is a script tag where we are linking to an external my scripts j/s file javascript file which over here is empty and you load a script at the [3:11] bottom of your body tag as opposed to in the head tag because typically you're going to be referring to your HTML down here and some JavaScript will load with the page and you want it to be after things that it's referring to so just a standard practice to load your script in the bottom and it uses a source attribute as opposed to a trough but here's our page it's just a non-functional button with a box so to get started we're going to assign some variables in our JavaScript file and the [3:44] way you declare a variable is just var and then the name of the variables so let's do a variable called button in a variable called box okay now I'm going to set this equal to I could just leave it at this JavaScript ends with a semicolon and then later we could do you know button equals and set a value in here but I'm going to declare what this button is what's going to be inside the variable what the variable will be right at the start and this brings in [4:15] something else that I want to talk about which is property accessor x' so kind of house selectors in CSS sort of dig into our document and grab what we want to style property accessories ooh the same thing with JavaScript but they're done in the dot notation so what I mean by that is document dot and then whatever we put after this is going to be what we're targeting here so javascript has some methods which are just built-in actions that they do [4:45] they're very useful I'm going to use the query selector method and methods have parentheses after their name the same way functions do which we will get into so the queries direct select your method you just put in here what what HTML element basically what tag you want to grab we are going to grab the button right here so we do query selector [5:17] button and now this button in HTML has been assigned to the variable button in JavaScript this just means we can access that button and do something to it within our JavaScript code without typing out the hole selector okay and so for the box we're going to do something similar we're going to use a property accessor but the method we're going to use instead of query selector is get element by ID this is another method in [5:50] JavaScript that pretty self-explanatory it gets the element in our HTML that it's linked to by its ID and remember the div that is our box has the ID of changeme so in the parentheses here of our method we just put change me now this div is in our variable in our JavaScript and we can do things with them so what we want to do is when we click this button we want this box to change color so we have to add an event [6:24] first of all to the button we just want to add the on click event so when the button is clicked that's an event that then we want the code to do something so we're going to target button again on click this is the event we are adding we want to set it to equal function we're gonna call our function change color remember how I said methods have parentheses after them functions [6:56] are always this is the name of the function and these parentheses here make this a function so we know we're calling a function and this will make sense when we're calling it somewhere else in the code not right after declaring it so we're declaring a function called change color and then after the name with the parentheses we open and close our brackets and then the code we want to execute when we call the change color function go in here so what we want to happen when we click our button and run [7:30] the change color function is change the color of our box so what we do in here is grab our box access the property style we want to access our background and set it to blue so box and then this is getting into if this were an HTML element we could add a style property to it and set background to blue in it so it's sort of just without changing the mark-up going in and changing something [8:02] about it dynamically so if we save this and refresh our page I click the button and the box turns blue so but you don't have to have the on click in the JavaScript which coolbot on click is you can set it to this property here so we can set the on click of our button to change me see when we're referencing a function that's all you have to do the name of the function with the opening [8:33] and closing parentheses and if we were to set the on click here we go into our JavaScript we don't need to set it here and in the HTML so what I would do is just remove the on click function from the JavaScript because we attach it in the HTML and now it should work the same way oh the function is called change color so now it works the same way whether you [9:04] are setting this event in the HTML or in the JavaScript okay so I mentioned conditional statements at the beginning I want to use a conditional statement in this change color function to check the color of the box and then there'll be a kind of toggle effect so the anatomy of an conditional if-else statement is if check this condition execute this code so if whatever we put in here do this [9:35] else do something else so we are checking if box style background equals red and you'll notice I did two equal signs here this is a comparison operator that means equals so it's two as opposed to just one this should be setting something so we're checking not setting we're using two there are other comparison operators such as not equal to the exclamation point is a negation symbol there's also you know greater [10:09] than less than greater than or equal to less than or equal to and this is identical which is slightly different from equals but we're just going to use equals for now because we don't need to worry about identical so this conditional statement is checking if our box background is red and if it is we want to change it to blue so I'm going to cut what we had already written and paste it in here so if our box [10:40] background is red change it to blue else let's change it to red box style background equals because we are setting it when we check we use our comparison operator of double equal sign when we're setting when you just use a single okay so if we save this and refresh if it's red it changes to blue and now it's blue if we click it it should check if it's red [11:12] it's not so it's going to run the else and change it back to red there you have it that's just a really quick overview of the basic tenants of JavaScript you've got a little bit of variable knowledge now you've got events and functions and even some conditional statements and a couple other terms so hopefully you found this helpful and we're gonna continue getting more advanced with this for now but thanks for watching I hope you found this useful and I will see you all next week [11:42] bye you guys [Music]",
+    "num_chunks": 12,
+    "chat_history": [
+      {
+        "role": "user",
+        "text": "what is js "
+      },
+      {
+        "role": "assistant",
+        "text": "JavaScript is a scripting language that adds dynamic effects and user interaction to a web page. It's the next step beyond HTML and CSS, making it a standard to learn in web development.",
+        "sources": [
+          "0:03",
+          "5:50",
+          "3:11",
+          "2:09",
+          "1:05"
+        ]
+      },
+      {
+        "role": "user",
+        "text": "what is ===?"
+      },
+      {
+        "role": "assistant",
+        "text": "The === operator in JavaScript is a comparison operator, also known as \"strict equality\". It checks if two values are identical (both value and type match).",
+        "sources": [
+          "10:09",
+          "9:04",
+          "1:05",
+          "2:09",
+          "4:15"
+        ]
+      }
+    ],
+    "qa_pairs_raw": "",
+    "quiz_questions": [],
+    "quiz_answers": {},
+    "quiz_result": null,
+    "quiz_submitted": false,
+    "last_output": "",
+    "original_output": "",
+    "created_at": "2026-06-12 18:10:30"
+  },
+  {
+    "session_id": "97b666d32390",
+    "video_id": "xwKbtUP87Dk",
+    "title": "JavaScript Basics in 10 Minutes",
+    "transcript": "[0:03] [Music] hey everybody its Claire welcome back to another web dev Wednesday today we are moving on from HTML and CSS to JavaScript and I intend this video to be just a quick overview of the basic concepts you will need to know before going in and learning more complex functionality using JavaScript but javascript is a scripting language it adds a lot of functionality and dynamic [0:35] effects and interaction with the user on a web page so it's sort of the next step beyond just your markup and then your Styles it is the dynamic functionality that JavaScript is pretty much the industry standard to learn so just to get started these are the concepts of JavaScript that I'm going to try and cover real quick today and we will continue revisiting these of course as we get further into the topic but these are just some terms that you will need [1:05] to understand as well as understanding how they interact with each other before moving on so we're going to be covering variables which is like a container for some content so the content of variables can change it's just a way to refer to elements that may take a more code space with just like a short quick name and it's usually semantic so it helps readability in your code events are things like clicking and scrolling and [1:37] things happening on your page that JavaScript can then react to or you can attach some functionality to different events and then functions are a way to put a bunch of code into this function which you name and then you can refer to it in your code a bunch of times or here and there or attach it to events and again it's another way to prevent repeating code and refer to a functionality with just a usually a semantics name that makes it clear what is going to be doing and I'm going to [2:09] touch on conditional statements which are usually part of function so conditional is just if-else so we're going to test a condition so if something is a certain way do this else do something else and this will again make since as we get going okay so this is just a little page I put together you can see in the mark up here we have a button and we have a div with the ID of changeme and then over here okay and [2:41] then you see we link to this style sheet which is just targeting this changeme div making it a square giving it a little bit of a margin centering it and giving it a background color and I just centered everything on the page and then down here at the bottom this is something new this is a script tag where we are linking to an external my scripts j/s file javascript file which over here is empty and you load a script at the [3:11] bottom of your body tag as opposed to in the head tag because typically you're going to be referring to your HTML down here and some JavaScript will load with the page and you want it to be after things that it's referring to so just a standard practice to load your script in the bottom and it uses a source attribute as opposed to a trough but here's our page it's just a non-functional button with a box so to get started we're going to assign some variables in our JavaScript file and the [3:44] way you declare a variable is just var and then the name of the variables so let's do a variable called button in a variable called box okay now I'm going to set this equal to I could just leave it at this JavaScript ends with a semicolon and then later we could do you know button equals and set a value in here but I'm going to declare what this button is what's going to be inside the variable what the variable will be right at the start and this brings in [4:15] something else that I want to talk about which is property accessor x' so kind of house selectors in CSS sort of dig into our document and grab what we want to style property accessories ooh the same thing with JavaScript but they're done in the dot notation so what I mean by that is document dot and then whatever we put after this is going to be what we're targeting here so javascript has some methods which are just built-in actions that they do [4:45] they're very useful I'm going to use the query selector method and methods have parentheses after their name the same way functions do which we will get into so the queries direct select your method you just put in here what what HTML element basically what tag you want to grab we are going to grab the button right here so we do query selector [5:17] button and now this button in HTML has been assigned to the variable button in JavaScript this just means we can access that button and do something to it within our JavaScript code without typing out the hole selector okay and so for the box we're going to do something similar we're going to use a property accessor but the method we're going to use instead of query selector is get element by ID this is another method in [5:50] JavaScript that pretty self-explanatory it gets the element in our HTML that it's linked to by its ID and remember the div that is our box has the ID of changeme so in the parentheses here of our method we just put change me now this div is in our variable in our JavaScript and we can do things with them so what we want to do is when we click this button we want this box to change color so we have to add an event [6:24] first of all to the button we just want to add the on click event so when the button is clicked that's an event that then we want the code to do something so we're going to target button again on click this is the event we are adding we want to set it to equal function we're gonna call our function change color remember how I said methods have parentheses after them functions [6:56] are always this is the name of the function and these parentheses here make this a function so we know we're calling a function and this will make sense when we're calling it somewhere else in the code not right after declaring it so we're declaring a function called change color and then after the name with the parentheses we open and close our brackets and then the code we want to execute when we call the change color function go in here so what we want to happen when we click our button and run [7:30] the change color function is change the color of our box so what we do in here is grab our box access the property style we want to access our background and set it to blue so box and then this is getting into if this were an HTML element we could add a style property to it and set background to blue in it so it's sort of just without changing the mark-up going in and changing something [8:02] about it dynamically so if we save this and refresh our page I click the button and the box turns blue so but you don't have to have the on click in the JavaScript which coolbot on click is you can set it to this property here so we can set the on click of our button to change me see when we're referencing a function that's all you have to do the name of the function with the opening [8:33] and closing parentheses and if we were to set the on click here we go into our JavaScript we don't need to set it here and in the HTML so what I would do is just remove the on click function from the JavaScript because we attach it in the HTML and now it should work the same way oh the function is called change color so now it works the same way whether you [9:04] are setting this event in the HTML or in the JavaScript okay so I mentioned conditional statements at the beginning I want to use a conditional statement in this change color function to check the color of the box and then there'll be a kind of toggle effect so the anatomy of an conditional if-else statement is if check this condition execute this code so if whatever we put in here do this [9:35] else do something else so we are checking if box style background equals red and you'll notice I did two equal signs here this is a comparison operator that means equals so it's two as opposed to just one this should be setting something so we're checking not setting we're using two there are other comparison operators such as not equal to the exclamation point is a negation symbol there's also you know greater [10:09] than less than greater than or equal to less than or equal to and this is identical which is slightly different from equals but we're just going to use equals for now because we don't need to worry about identical so this conditional statement is checking if our box background is red and if it is we want to change it to blue so I'm going to cut what we had already written and paste it in here so if our box [10:40] background is red change it to blue else let's change it to red box style background equals because we are setting it when we check we use our comparison operator of double equal sign when we're setting when you just use a single okay so if we save this and refresh if it's red it changes to blue and now it's blue if we click it it should check if it's red [11:12] it's not so it's going to run the else and change it back to red there you have it that's just a really quick overview of the basic tenants of JavaScript you've got a little bit of variable knowledge now you've got events and functions and even some conditional statements and a couple other terms so hopefully you found this helpful and we're gonna continue getting more advanced with this for now but thanks for watching I hope you found this useful and I will see you all next week [11:42] bye you guys [Music]",
+    "num_chunks": 12,
+    "chat_history": [],
+    "qa_pairs_raw": "",
+    "quiz_questions": [
+      {
+        "question": "What is JavaScript?",
+        "options": {
+          "A": "A programming language",
+          "B": "A scripting language",
+          "C": "A markup language",
+          "D": "A styling language"
+        },
+        "answer": "B"
+      },
+      {
+        "question": "What are variables used for in JavaScript?",
+        "options": {
+          "A": "To declare functions",
+          "B": "As a way to refer to elements",
+          "C": "To add events to the page",
+          "D": "To set styles for HTML elements"
+        },
+        "answer": "B"
+      },
+      {
+        "question": "How do you declare a variable in JavaScript?",
+        "options": {
+          "A": "With the keyword 'function'",
+          "B": "With the keyword 'var'",
+          "C": "With the keyword 'if'",
+          "D": "With the keyword 'else'"
+        },
+        "answer": "B"
+      },
+      {
+        "question": "What is a property accessor in JavaScript?",
+        "options": {
+          "A": "A way to access an element's properties",
+          "B": "A way to add events to an element",
+          "C": "A way to set styles for an element",
+          "D": "A way to declare a variable"
+        },
+        "answer": "A"
+      },
+      {
+        "question": "What is the purpose of the 'query selector' method in JavaScript?",
+        "options": {
+          "A": "To get the value of an input field",
+          "B": "To access an HTML element",
+          "C": "To add an event listener to an element",
+          "D": "To set the style of an element"
+        },
+        "answer": "B"
+      },
+      {
+        "question": "What is the purpose of a function in JavaScript?",
+        "options": {
+          "A": "To declare a variable",
+          "B": "To access an HTML element",
+          "C": "To execute a block of code",
+          "D": "To add an event listener to an element"
+        },
+        "answer": "C"
+      },
+      {
+        "question": "What is the purpose of a conditional statement (if-else) in JavaScript?",
+        "options": {
+          "A": "To declare a function",
+          "B": "To access an HTML element",
+          "C": "To execute different code based on conditions",
+          "D": "To add an event listener to an element"
+        },
+        "answer": "C"
+      }
+    ],
+    "quiz_answers": {
+      "0": "B",
+      "1": "A",
+      "2": "B",
+      "3": "B",
+      "4": "B",
+      "5": "A",
+      "6": "B"
+    },
+    "quiz_result": {
+      "total": 7,
+      "correct": 3,
+      "wrong": 4,
+      "percentage": 43,
+      "grade": "F",
+      "review": [
+        {
+          "num": 1,
+          "question": "What is JavaScript?",
+          "user_answer": "B",
+          "correct_answer": "B",
+          "user_text": "A scripting language",
+          "correct_text": "A scripting language",
+          "is_correct": true
+        },
+        {
+          "num": 2,
+          "question": "What are variables used for in JavaScript?",
+          "user_answer": "A",
+          "correct_answer": "B",
+          "user_text": "To declare functions",
+          "correct_text": "As a way to refer to elements",
+          "is_correct": false
+        },
+        {
+          "num": 3,
+          "question": "How do you declare a variable in JavaScript?",
+          "user_answer": "B",
+          "correct_answer": "B",
+          "user_text": "With the keyword 'var'",
+          "correct_text": "With the keyword 'var'",
+          "is_correct": true
+        },
+        {
+          "num": 4,
+          "question": "What is a property accessor in JavaScript?",
+          "user_answer": "B",
+          "correct_answer": "A",
+          "user_text": "A way to add events to an element",
+          "correct_text": "A way to access an element's properties",
+          "is_correct": false
+        },
+        {
+          "num": 5,
+          "question": "What is the purpose of the 'query selector' method in JavaScript?",
+          "user_answer": "B",
+          "correct_answer": "B",
+          "user_text": "To access an HTML element",
+          "correct_text": "To access an HTML element",
+          "is_correct": true
+        },
+        {
+          "num": 6,
+          "question": "What is the purpose of a function in JavaScript?",
+          "user_answer": "A",
+          "correct_answer": "C",
+          "user_text": "To declare a variable",
+          "correct_text": "To execute a block of code",
+          "is_correct": false
+        },
+        {
+          "num": 7,
+          "question": "What is the purpose of a conditional statement (if-else) in JavaScript?",
+          "user_answer": "B",
+          "correct_answer": "C",
+          "user_text": "To access an HTML element",
+          "correct_text": "To execute different code based on conditions",
+          "is_correct": false
+        }
+      ]
+    },
+    "quiz_submitted": true,
+    "last_output": "[0:03] [Music] hey everybody its Claire welcome back to another web dev Wednesday today we are moving on from HTML and CSS to JavaScript and I intend this video to be just a quick overview of the basic concepts you will need to know before going in and learning more complex functionality using JavaScript but javascript is a scripting language it adds a lot of functionality and dynamic [0:35] effects and interaction with the user on a web page so it's sort of the next step beyond just your markup and then your Styles it is the dynamic functionality that JavaScript is pretty much the industry standard to learn so just to get started these are the concepts of JavaScript that I'm going to try and cover real quick today and we will continue revisiting these of course as we get further into the topic but these are just some terms that you will need [1:05] to understand as well as understanding how they interact with each other before moving on so we're going to be covering variables which is like a container for some content so the content of variables can change it's just a way to refer to elements that may take a more code space with just like a short quick name and it's usually semantic so it helps readability in your code events are things like clicking and scrolling and [1:37] things happening on your page that JavaScript can then react to or you can attach some functionality to different events and then functions are a way to put a bunch of code into this function which you name and then you can refer to it in your code a bunch of times or here and there or attach it to events and again it's another way to prevent repeating code and refer to a functionality with just a usually a semantics name that makes it clear what is going to be doing and I'm going to [2:09] touch on conditional statements which are usually part of function so conditional is just if-else so we're going to test a condition so if something is a certain way do this else do something else and this will again make since as we get going okay so this is just a little page I put together you can see in the mark up here we have a button and we have a div with the ID of changeme and then over here okay and [2:41] then you see we link to this style sheet which is just targeting this changeme div making it a square giving it a little bit of a margin centering it and giving it a background color and I just centered everything on the page and then down here at the bottom this is something new this is a script tag where we are linking to an external my scripts j/s file javascript file which over here is empty and you load a script at the [3:11] bottom of your body tag as opposed to in the head tag because typically you're going to be referring to your HTML down here and some JavaScript will load with the page and you want it to be after things that it's referring to so just a standard practice to load your script in the bottom and it uses a source attribute as opposed to a trough but here's",
+    "original_output": "[0:03] [Music] hey everybody its Claire welcome back to another web dev Wednesday today we are moving on from HTML and CSS to JavaScript and I intend this video to be just a quick overview of the basic concepts you will need to know before going in and learning more complex functionality using JavaScript but javascript is a scripting language it adds a lot of functionality and dynamic [0:35] effects and interaction with the user on a web page so it's sort of the next step beyond just your markup and then your Styles it is the dynamic functionality that JavaScript is pretty much the industry standard to learn so just to get started these are the concepts of JavaScript that I'm going to try and cover real quick today and we will continue revisiting these of course as we get further into the topic but these are just some terms that you will need [1:05] to understand as well as understanding how they interact with each other before moving on so we're going to be covering variables which is like a container for some content so the content of variables can change it's just a way to refer to elements that may take a more code space with just like a short quick name and it's usually semantic so it helps readability in your code events are things like clicking and scrolling and [1:37] things happening on your page that JavaScript can then react to or you can attach some functionality to different events and then functions are a way to put a bunch of code into this function which you name and then you can refer to it in your code a bunch of times or here and there or attach it to events and again it's another way to prevent repeating code and refer to a functionality with just a usually a semantics name that makes it clear what is going to be doing and I'm going to [2:09] touch on conditional statements which are usually part of function so conditional is just if-else so we're going to test a condition so if something is a certain way do this else do something else and this will again make since as we get going okay so this is just a little page I put together you can see in the mark up here we have a button and we have a div with the ID of changeme and then over here okay and [2:41] then you see we link to this style sheet which is just targeting this changeme div making it a square giving it a little bit of a margin centering it and giving it a background color and I just centered everything on the page and then down here at the bottom this is something new this is a script tag where we are linking to an external my scripts j/s file javascript file which over here is empty and you load a script at the [3:11] bottom of your body tag as opposed to in the head tag because typically you're going to be referring to your HTML down here and some JavaScript will load with the page and you want it to be after things that it's referring to so just a standard practice to load your script in the bottom and it uses a source attribute as opposed to a trough but here's",
+    "created_at": "2026-06-12 18:45:54"
+  }
+]
